@@ -48,7 +48,7 @@ func (f *parseLevel) Run(event *beat.Event) (*beat.Event, error) {
 	value, err := event.GetValue(f.Field)
 	if err != nil {
 		return event, nil
-        }
+	}
 
 	lIndex := -1
 	levelStr := ""
