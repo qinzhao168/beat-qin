@@ -44,7 +44,7 @@ func (f *parseLevel) Run(event *beat.Event) (*beat.Event, error) {
 	lIndex := -1
 	levelStr := ""
 	for _, level := range f.Levels {
-		index := strings.Index(strings.ToLower(value.(string)), strings.ToLower(level))
+		index := strings.Index(strings.ToLower(fmt.Sprint(value)), strings.ToLower(level))
 		if index == -1 {
 			continue
 		}
