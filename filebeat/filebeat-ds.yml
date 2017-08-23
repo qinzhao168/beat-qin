@@ -124,6 +124,7 @@ data:
      - type: log
        paths:
           - /var/lib/docker/containers/*/*-json.log
+          - /var/log/containers/applogs/*
 
      processors:
      - add_kubernetes_metadata:

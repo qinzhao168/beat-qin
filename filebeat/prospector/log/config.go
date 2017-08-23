@@ -29,7 +29,7 @@ var (
 		ScanFrequency:  10 * time.Second,
 		CleanRemoved:   true,
 		HarvesterLimit: 0,
-		Symlinks:       false,
+		Symlinks:       true,
 		TailFiles:      false,
 		ScanSort:       "",
 		ScanOrder:      "asc",

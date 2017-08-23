@@ -4,7 +4,7 @@ SYSTEM_TESTS?=true
 TEST_ENVIRONMENT?=true
 GOX_FLAGS=-arch="amd64 386 arm ppc64 ppc64le"
 ES_BEATS?=..
-TAG=5.5.2
+TAG=5.5.2-$(shell date +%s)
 
 include ${ES_BEATS}/libbeat/scripts/Makefile
 
