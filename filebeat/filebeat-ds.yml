@@ -90,6 +90,9 @@ spec:
           mountPath: /usr/local/share/filebeat
         - name: filebeatconfig
           mountPath: /etc/filebeat/config
+        - name: filelogs
+          mountPath: /var/log/containers/applogs
+          readOnly: true
       terminationGracePeriodSeconds: 30
       volumes:
       - name: varlibdockercontainers
@@ -104,6 +107,9 @@ spec:
       - name: filebeatconfig
         configMap:
           name: filebeatconfig
+      - name: filelogs
+        hostPath:
+          path: /var/log/containers/applogs
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -118,22 +124,34 @@ data:
      - type: log
        paths:
           - /var/lib/docker/containers/*/*-json.log
+
      processors:
      - add_kubernetes_metadata:
          in_cluster: true
          host: "${hostname}"
+     - add_fields:
+         fields:
+           log: '{message}'
      - decode_json_fields:
-         fields: ["message"]
+         when:
+           regexp:
+             message: "{*}"
+         fields: ["log"]
+         overwrite_keys: true
+         target: ""
      - drop_fields:
-         fields: ["source", "beat.version", "beat.name"]
+         fields: ["source", "beat.version", "beat.name", "message"]
      - parse_level:
          levels: ["fatal", "error", "warn", "info", "debug"]
-         field: "message.log"
+         field: "log"
+
+     logging.level: info
      setup.template.enabled: true
      setup.template.name: "filebeat-%{+yyyy.MM.dd}"
      setup.template.pattern: "filebeat-*"
      setup.template.fields: "${path.config}/fields.yml"
      setup.template.overwrite: true
+
      output:
        elasticsearch:
          hosts: ["10.4.109.133:9200"]

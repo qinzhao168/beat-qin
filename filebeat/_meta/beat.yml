@@ -14,7 +14,7 @@ processors:
 - decode_json_fields:
     when:
        regexp:
-         message: "{*}"
+         log: "{*}"
     fields: ["log"]
     overwrite_keys: true
     target: ""
