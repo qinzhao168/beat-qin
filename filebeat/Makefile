@@ -59,4 +59,7 @@ collect: fields kibana modules configs collect-docs
 .PHONY: create-fileset
 create-fileset: python-env
 	@${PYTHON_ENV}/bin/python ${ES_BEATS}/filebeat/scripts/create_fileset.py --path=$(PWD) --es_beats=$(ES_BEATS) --module=$(MODULE) --fileset=$(FILESET)
-
+docker:
+	@docker run --rm --name golang -v $(shell dirname $(shell pwd)):/go/src/github.com/elastic/beats/ golang:1.8.3-alpine3.6 /bin/sh -c "cd /go/src/github.com/elastic/beats/filebeat && apk add --update build-base && go build --ldflags -w -o filebeat"
+image: docker
+	docker build -t filebeat:latest -f Dockerfile.dev .

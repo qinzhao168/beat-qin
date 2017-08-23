@@ -1,0 +1,12 @@
+FROM alpine:3.6
+
+COPY _meta/beat.yml /beat-template.yml
+COPY fields.yml /fields.yml
+COPY run.sh /run.sh
+COPY filebeat /filebeat
+COPY module /module
+RUN apk add --update -U tzdata
+
+WORKDIR /
+
+ENTRYPOINT ["./run.sh"]
