@@ -28,16 +28,7 @@ func newParseLevel(c *common.Config) (processors.Processor, error) {
 	}{}
 	err := c.Unpack(&config)
 	if err != nil {
-		return nil, fmt.Errorf("fail to unpack the drop_fields configuration: %s", err)
-	}
-
-	/* remove read only fields */
-	for _, readOnly := range processors.MandatoryExportedFields {
-		for i, level := range config.Levels {
-			if readOnly == level {
-				config.Levels = append(config.Levels[:i], config.Levels[i+1:]...)
-			}
-		}
+		return nil, fmt.Errorf("fail to unpack the parse_level configuration: %s", err)
 	}
 
 	f := &parseLevel{Levels: config.Levels, Field: config.Field}
