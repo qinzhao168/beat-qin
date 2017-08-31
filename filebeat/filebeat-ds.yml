@@ -68,7 +68,7 @@ spec:
       serviceAccountName: filebeat
       containers:
       - name: filebeat
-        image: filebeat:5.5.2
+        image: filebeat:5.5.2-1504164684
         resources:
           limits:
             memory: 500Mi
@@ -152,6 +152,19 @@ data:
      setup.template.pattern: "filebeat-*"
      setup.template.fields: "${path.config}/fields.yml"
      setup.template.overwrite: true
+     setup.template.settings:
+       index:
+          analysis:
+            analyzer:
+              enncloud_analyzer:
+                filter: ["standard", "lowercase", "stop"]
+                char_filter: ["my_filter"]
+                type: custom
+                tokenizer: standard
+            char_filter:
+              my_filter:
+                type: mapping
+                mappings: ["-=>_"]
 
      output:
        elasticsearch:

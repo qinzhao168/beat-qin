@@ -29,8 +29,22 @@ logging.level: info
 setup.template.enabled: true
 setup.template.name: "filebeat-%{+yyyy.MM.dd}"
 setup.template.pattern: "filebeat-*"
-setup.template.fields: "${path.config}/fields.yml"
+#setup.template.fields: "${path.config}/fields.yml"
+setup.template.fields: "/fields.yml"
 setup.template.overwrite: true
+setup.template.settings:
+   index:
+     analysis:
+       analyzer:
+         enncloud_analyzer:
+           filter: ["standard", "lowercase", "stop"]
+           char_filter: ["my_filter"]
+           type: custom
+           tokenizer: standard
+       char_filter:
+         my_filter:
+           type: mapping
+           mappings: ["-=>_"]
 
 output:
   elasticsearch:
