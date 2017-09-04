@@ -1,0 +1,37 @@
+- key: log
+  title: Log file content
+  description: >
+    Contains log file lines.
+  fields:
+    - name: source
+      type: keyword
+      required: false
+
+    - name: filepath
+      type: keyword
+      required: false
+
+    - name: level
+      type: keyword
+      required: false
+
+    - name: offset
+      type: long
+      required: false
+
+    - name: "@timestamp"
+      type: date
+      required: false
+
+    - name: time
+      type: date
+      required: false
+
+    - name: log
+      type: text
+      required: false
+      analyzer: enncloud_analyzer
+
+    - name: stream
+      type: keyword
+      required: false
