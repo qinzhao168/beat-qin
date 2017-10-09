@@ -57,12 +57,16 @@ func (f *LogPathMatcher) MetadataIndex(event common.MapStr) string {
 		if strings.Contains(source, f.LogsPath) {
 			//Docker container is 64 chars in length
 			cid = source[len(f.LogsPath) : len(f.LogsPath)+64]
+		} else if strings.Contains(source, "/var/log/filelog/") {
+			cid = source[len("/var/log/filelog/") : len("/var/log/filelog/")+36]
+			return cid
 		} else if strings.Contains(source, "/var/log/containers/applogs/") {
 			matcher := f.reg.FindAllStringSubmatch(source, -1)
 			if len(matcher) == 1 {
 				if len(matcher[0]) == 4 {
 					cid = matcher[0][2]
-					event.Put("filepath", matcher[0][3])
+					event.Put("filename", matcher[0][3])
+					event.Put("stream", "file")
 				}
 			}
 		}

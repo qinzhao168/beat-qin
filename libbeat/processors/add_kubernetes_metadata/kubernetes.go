@@ -193,9 +193,22 @@ func (k *kubernetesAnnotator) Run(event *beat.Event) (*beat.Event, error) {
 		return event, nil
 	}
 
-	metadata := k.podWatcher.GetMetaData(index)
-	if metadata == nil {
-		return event, nil
+	var metadata common.MapStr
+	if len(index) == 36 {
+		pod := k.podWatcher.GetPod(index)
+		if pod == nil {
+			return event, nil
+		}
+		metadatas := k.podWatcher.indexers.GetMetadata(pod)
+		if metadatas == nil {
+			return event, nil
+		}
+		metadata = metadatas[0].Data
+	} else {
+		metadata = k.podWatcher.GetMetaData(index)
+		if metadata == nil {
+			return event, nil
+		}
 	}
 
 	meta := common.MapStr{}

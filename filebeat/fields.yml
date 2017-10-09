@@ -7,7 +7,7 @@
       type: keyword
       required: false
 
-    - name: filepath
+    - name: filename
       type: keyword
       required: false
 
