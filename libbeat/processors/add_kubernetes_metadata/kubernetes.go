@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
+	"encoding/base64"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
@@ -199,11 +201,24 @@ func (k *kubernetesAnnotator) Run(event *beat.Event) (*beat.Event, error) {
 		if pod == nil {
 			return event, nil
 		}
-		metadatas := k.podWatcher.indexers.GetMetadata(pod)
-		if metadatas == nil {
+		containerName := filepath.Base(filepath.Dir(filepath.Dir(event.Fields["source"].(string))))
+		var podContainerStatus *PodContainerStatus
+		for _, container := range append(pod.Status.ContainerStatuses, pod.Status.InitContainerStatuses...) {
+			if container.Name == containerName {
+				podContainerStatus = &container
+				break
+			}
+		}
+
+		if podContainerStatus == nil {
 			return event, nil
 		}
-		metadata = metadatas[0].Data
+		metadata = k.podWatcher.GetMetaData(podContainerStatus.ContainerID[len(podContainerStatus.ContainerID)-64 : len(podContainerStatus.ContainerID)])
+		containerPath, err := base64.StdEncoding.DecodeString(filepath.Base(filepath.Dir(event.Fields["source"].(string))))
+		if err == nil {
+			metadata.Put("filepath", filepath.Join(string(containerPath), filepath.Base(event.Fields["source"].(string))))
+		}
+
 	} else {
 		metadata = k.podWatcher.GetMetaData(index)
 		if metadata == nil {
