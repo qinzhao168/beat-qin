@@ -105,12 +105,14 @@ func (w *watcher) Start() error {
 	}
 
 	for _, c := range containers {
-		w.containers[c.ID] = &Container{
+		container := &Container{
 			ID:     c.ID,
 			Name:   c.Names[0][1:], // Strip '/' from container names
 			Image:  c.Image,
 			Labels: c.Labels,
 		}
+		w.containers[c.ID] = container
+		w.containers[container.Name] = container
 	}
 
 	go w.watch()
@@ -143,17 +145,20 @@ func (w *watcher) watch() {
 					image := event.Actor.Attributes["image"]
 					delete(event.Actor.Attributes, "name")
 					delete(event.Actor.Attributes, "image")
-					w.containers[event.Actor.ID] = &Container{
+					container := &Container{
 						ID:     event.Actor.ID,
 						Name:   name,
 						Image:  image,
 						Labels: event.Actor.Attributes,
 					}
+					w.containers[container.ID] = container
+					w.containers[container.Name] = container
 				}
 
 				// Delete
 				if event.Action == "die" || event.Action == "kill" {
 					delete(w.containers, event.Actor.ID)
+					delete(w.containers, event.Actor.Attributes["name"])
 				}
 
 			case err := <-errors:

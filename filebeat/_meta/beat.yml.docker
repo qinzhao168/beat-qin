@@ -1,0 +1,51 @@
+filebeat.prospectors:
+- input_type: log
+  paths:
+    - /var/lib/docker/containers/*/*-json.log
+    - /var/log/filelog/containers/*/*/*/*.log
+
+processors:
+- add_docker_metadata:
+    host: "unix:///var/run/docker.sock"
+
+- add_fields:
+    fields:
+      message: '{log}'
+
+- decode_json_fields:
+    when:
+       regexp:
+         message: "{*}"
+    fields: ["message"]
+    overwrite_keys: true
+    target: ""
+
+- drop_fields:
+     fields: ["docker.container.labels.annotation.io.kubernetes.container.terminationMessagePath", "docker.container.labels.annotation.io.kubernetes.container.hash", "docker.container.labels.annotation.io.kubernetes.container.terminationMessagePolicy", "docker.container.labels.annotation.io.kubernetes.pod.terminationGracePeriod", "message", "beat.version"]
+
+- parse_level:
+     levels: ["fatal", "error", "warn", "info", "debug"]
+     field: "log"
+
+setup.template.enabled: true
+setup.template.name: "filebeat-%{+yyyy.MM.dd}"
+setup.template.pattern: "filebeat-*"
+setup.template.fields: "${path.config}/fields.yml"
+setup.template.overwrite: true
+setup.template.settings:
+  index:
+     analysis:
+       analyzer:
+         enncloud_analyzer:
+           filter: ["standard", "lowercase", "stop"]
+           char_filter: ["my_filter"]
+           type: custom
+           tokenizer: standard
+       char_filter:
+         my_filter:
+           type: mapping
+           mappings: ["-=>_"]
+
+output.elasticsearch:
+  hosts: ["10.4.109.81:9200"]
+  index: "filebeat-%{+yyyy.MM.dd}"

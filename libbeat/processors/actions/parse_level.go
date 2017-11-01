@@ -58,6 +58,9 @@ func (f *parseLevel) Run(event *beat.Event) (*beat.Event, error) {
 			levelStr = level
 		}
 	}
+	if levelStr == "" {
+		levelStr = "info"
+	}
 	event.PutValue("level", levelStr)
 
 	return event, nil

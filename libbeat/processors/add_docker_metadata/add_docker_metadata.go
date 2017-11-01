@@ -101,6 +101,7 @@ func (d *addDockerMetadata) Run(event *beat.Event) (*beat.Event, error) {
 
 	container := d.watcher.Container(cid)
 	if container != nil {
+		event.PutValue("docker.container.id",container.ID)
 		meta := common.MapStr{}
 		metaIface, ok := event.Fields["docker"]
 		if ok {
