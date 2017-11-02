@@ -93,6 +93,9 @@ spec:
         - name: filelogs
           mountPath: /var/log/containers/applogs
           readOnly: true
+        - name: dockersock
+          mountPath: /var/run/docker.sock
+          readOnly: true
       terminationGracePeriodSeconds: 30
       volumes:
       - name: varlibdockercontainers
@@ -110,6 +113,9 @@ spec:
       - name: filelogs
         hostPath:
           path: /var/log/containers/applogs
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
 ---
 kind: ConfigMap
 apiVersion: v1
