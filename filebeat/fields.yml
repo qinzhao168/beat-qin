@@ -19,7 +19,15 @@
       type: long
       required: false
 
+    - name: time_nano
+      type: long
+      required: false
+
     - name: "@timestamp"
+      type: date
+      required: false
+
+    - name: "time"
       type: date
       required: false
 
