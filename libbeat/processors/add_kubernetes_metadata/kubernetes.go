@@ -225,6 +225,7 @@ func (k *kubernetesAnnotator) Run(event *beat.Event) (*beat.Event, error) {
 			return event, nil
 		}
 	}
+	metadata.Put("time_nano", time.Now().UnixNano())
 
 	meta := common.MapStr{}
 	metaIface, ok := event.Fields["kubernetes"]
