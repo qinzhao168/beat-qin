@@ -1,0 +1,177 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: filebeat
+  namespace: kube-system
+  labels:
+    k8s-app: filebeat
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: filebeat
+  labels:
+    k8s-app: filebeat
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - "namespaces"
+  - "pods"
+  verbs:
+  - "get"
+  - "watch"
+  - "list"
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: filebeat
+  labels:
+    k8s-app: filebeat
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+subjects:
+- kind: ServiceAccount
+  name: filebeat
+  namespace: kube-system
+  apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: filebeat
+  apiGroup: ""
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: filebeat
+  namespace: kube-system
+  labels:
+    k8s-app: filebeat
+    version: v2.0.1
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  template:
+    metadata:
+      labels:
+        k8s-app: filebeat
+        kubernetes.io/cluster-service: "true"
+        version: v2.0.1
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ''
+    spec:
+      serviceAccountName: filebeat
+      containers:
+      - name: filebeat
+        image: harbor.enncloud.cn/enncloud/filebeat:5.5.2-1510124771
+        resources:
+          limits:
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+        volumeMounts:
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: filebeatlogs
+          mountPath: /var/log/filebeat
+        - name: filebeatdata
+          mountPath: /usr/local/share/filebeat
+        - name: filebeatconfig
+          mountPath: /etc/filebeat/config
+        - name: filelogs
+          mountPath: /var/log/filelog
+          readOnly: true
+        - name: dockersock
+          mountPath: /var/run/docker.sock
+          readOnly: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: filebeatlogs
+        hostPath:
+          path: /var/log/filebeat
+      - name: filebeatdata
+        hostPath:
+          path: /usr/local/share/filebeat
+      - name: filebeatconfig
+        configMap:
+          name: filebeatconfig
+      - name: filelogs
+        hostPath:
+          path: /var/log/filelog
+      - name: dockersock
+        hostPath:
+          path: /var/run/docker.sock
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: filebeatconfig
+  namespace: kube-system
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+data:
+  beat-template.yml: |-
+     filebeat.prospectors:
+     - type: log
+       paths:
+          - /var/lib/docker/containers/*/*-json.log
+          - /var/log/containers/applogs/*
+
+     processors:
+     - add_docker_metadata:
+         host: "unix:///var/run/docker.sock"
+     - add_fields:
+         fields:
+           message: '{log}'
+     - decode_json_fields:
+         when:
+            regexp:
+              message: "{*}"
+         fields: ["message"]
+         overwrite_keys: true
+         target: ""
+     - drop_fields:
+         fields: ["docker.container.labels.annotation.io.kubernetes.container.terminationMessagePath", "docker.container.labels.annotation.io.kubernetes.container.hash", "docker.container.labels.annotation.io.kubernetes.container.terminationMessagePolicy", "docker.container.labels.annotation.io.kubernetes.pod.terminationGracePeriod", "message", "beat.version"]
+     - parse_level:
+         levels: ["fatal", "error", "warn", "info", "debug"]
+         field: "log"
+
+     logging.level: info
+     setup.template.enabled: true
+     setup.template.name: "filebeat-%{+yyyy.MM.dd}"
+     setup.template.pattern: "filebeat-*"
+     setup.template.fields: "${path.config}/fields.yml"
+     setup.template.overwrite: true
+     setup.template.settings:
+       index:
+          analysis:
+            analyzer:
+              enncloud_analyzer:
+                filter: ["standard", "lowercase", "stop"]
+                char_filter: ["my_filter"]
+                type: custom
+                tokenizer: standard
+            char_filter:
+              my_filter:
+                type: mapping
+                mappings: ["-=>_"]
+
+     output:
+       elasticsearch:
+         hosts: ["10.4.109.81:9200"]
+         index: "filebeat-%{+yyyy.MM.dd}"
