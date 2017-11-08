@@ -146,7 +146,7 @@ data:
          overwrite_keys: true
          target: ""
      - drop_fields:
-         fields: ["docker.container.labels.annotation.io.kubernetes.container.terminationMessagePath", "docker.container.labels.annotation.io.kubernetes.container.hash", "docker.container.labels.annotation.io.kubernetes.container.terminationMessagePolicy", "docker.container.labels.annotation.io.kubernetes.pod.terminationGracePeriod", "message", "beat.version"]
+         fields: ["docker.container.labels.annotation.io.kubernetes.container.terminationMessagePath", "docker.container.labels.annotation.io.kubernetes.container.hash", "docker.container.labels.annotation.io.kubernetes.container.terminationMessagePolicy", "docker.container.labels.annotation.io.kubernetes.pod.terminationGracePeriod", "message", "beat.version", "docker.container.labels.annotation.io.kubernetes.container.ports", "docker.container.labels.io.kubernetes.container.terminationMessagePath", "docker.container.labels.io.kubernetes.container.restartCount", "docker.container.labels.io.kubernetes.container.ports", "docker.container.labels.io.kubernetes.container.hash", "docker.container.labels.io.kubernetes.pod.terminationGracePeriod"]
      - parse_level:
          levels: ["fatal", "error", "warn", "info", "debug"]
          field: "log"
