@@ -10,7 +10,7 @@ processors:
 
 - add_fields:
     fields:
-      message: '{log}'
+      log: '{message}'
 
 - decode_json_fields:
     when:

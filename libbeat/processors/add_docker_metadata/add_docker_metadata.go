@@ -1,9 +1,12 @@
 package add_docker_metadata
 
 import (
+	"encoding/base64"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
@@ -123,6 +126,16 @@ func (d *addDockerMetadata) Run(event *beat.Event) (*beat.Event, error) {
 		event.Fields["docker"] = meta
 		event.Fields["cluster_id"] = container.Env["CLUSTER_ID"]
 		event.Fields["user_id"] = container.Env["USER_ID"]
+		logsource := event.Fields["source"].(string)
+		if strings.HasPrefix(logsource, "/var/log/filelog/containers/") {
+			vn, err := base64.StdEncoding.DecodeString(filepath.Base(filepath.Dir(logsource)))
+			if err == nil {
+				event.PutValue("filename", *(*string)(unsafe.Pointer(&vn)))
+				event.PutValue("filename", filepath.Join(*(*string)(unsafe.Pointer(&vn)), filepath.Base(logsource)))
+			}
+			event.PutValue("stdout", "container_file")
+		}
+
 	} else {
 		logp.Debug("docker", "Container not found: %s", cid)
 	}

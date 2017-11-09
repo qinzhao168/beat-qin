@@ -130,14 +130,14 @@ data:
      - type: log
        paths:
           - /var/lib/docker/containers/*/*-json.log
-          - /var/log/containers/applogs/*
+          - /var/log/filelog/containers/*/*/*/*.log
 
      processors:
      - add_docker_metadata:
          host: "unix:///var/run/docker.sock"
      - add_fields:
          fields:
-           message: '{log}'
+           log: '{message}'
      - decode_json_fields:
          when:
             regexp:
