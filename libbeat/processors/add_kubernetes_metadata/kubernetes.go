@@ -2,13 +2,13 @@ package add_kubernetes_metadata
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
-	"encoding/base64"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
@@ -225,7 +225,6 @@ func (k *kubernetesAnnotator) Run(event *beat.Event) (*beat.Event, error) {
 			return event, nil
 		}
 	}
-	metadata.Put("time_nano", time.Now().UnixNano())
 
 	meta := common.MapStr{}
 	metaIface, ok := event.Fields["kubernetes"]
@@ -237,6 +236,7 @@ func (k *kubernetesAnnotator) Run(event *beat.Event) (*beat.Event, error) {
 
 	meta.Update(metadata)
 	event.Fields["kubernetes"] = meta
+	event.PutValue("time_nano", time.Now().UnixNano())
 
 	return event, nil
 }

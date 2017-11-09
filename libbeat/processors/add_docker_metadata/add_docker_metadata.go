@@ -3,6 +3,7 @@ package add_docker_metadata
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/common"
@@ -101,7 +102,7 @@ func (d *addDockerMetadata) Run(event *beat.Event) (*beat.Event, error) {
 
 	container := d.watcher.Container(cid)
 	if container != nil {
-		event.PutValue("docker.container.id",container.ID)
+		event.PutValue("docker.container.id", container.ID)
 		meta := common.MapStr{}
 		metaIface, ok := event.Fields["docker"]
 		if ok {
@@ -120,9 +121,12 @@ func (d *addDockerMetadata) Run(event *beat.Event) (*beat.Event, error) {
 		meta.Put("container.image", container.Image)
 		meta.Put("container.name", container.Name)
 		event.Fields["docker"] = meta
+		event.Fields["cluster_id"] = container.Env["CLUSTER_ID"]
+		event.Fields["user_id"] = container.Env["USER_ID"]
 	} else {
 		logp.Debug("docker", "Container not found: %s", cid)
 	}
+	event.PutValue("time_nano", time.Now().UnixNano())
 
 	return event, nil
 }

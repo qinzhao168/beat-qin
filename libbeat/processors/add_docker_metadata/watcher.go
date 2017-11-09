@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -43,6 +44,7 @@ type Container struct {
 	Name   string
 	Image  string
 	Labels map[string]string
+	Env    map[string]string
 }
 
 type WatcherConstructor func(host string, tls *TLSConfig) (Watcher, error)
@@ -110,6 +112,16 @@ func (w *watcher) Start() error {
 			Name:   c.Names[0][1:], // Strip '/' from container names
 			Image:  c.Image,
 			Labels: c.Labels,
+			Env:    make(map[string]string),
+		}
+		info, err := w.client.ContainerInspect(w.ctx, c.ID)
+		if err == nil {
+			for _, env := range info.Config.Env {
+				kv := strings.SplitN(env, "=", 2)
+				if len(kv) >= 2 {
+					container.Env[kv[0]] = kv[1]
+				}
+			}
 		}
 		w.containers[c.ID] = container
 		w.containers[container.Name] = container
@@ -150,6 +162,16 @@ func (w *watcher) watch() {
 						Name:   name,
 						Image:  image,
 						Labels: event.Actor.Attributes,
+						Env:    make(map[string]string),
+					}
+					info, err := w.client.ContainerInspect(w.ctx, event.Actor.ID)
+					if err == nil {
+						for _, env := range info.Config.Env {
+							kv := strings.SplitN(env, "=", 2)
+							if len(kv) >= 2 {
+								container.Env[kv[0]] = kv[1]
+							}
+						}
 					}
 					w.containers[container.ID] = container
 					w.containers[container.Name] = container
