@@ -133,7 +133,7 @@ func (d *addDockerMetadata) Run(event *beat.Event) (*beat.Event, error) {
 				event.PutValue("filename", *(*string)(unsafe.Pointer(&vn)))
 				event.PutValue("filename", filepath.Join(*(*string)(unsafe.Pointer(&vn)), filepath.Base(logsource)))
 			}
-			event.PutValue("stdout", "container_file")
+			event.PutValue("stream", "file")
 		}
 
 	} else {
