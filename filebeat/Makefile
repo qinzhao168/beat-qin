@@ -63,6 +63,6 @@ create-fileset: python-env
 docker:
 	@docker run --rm --name golang -v $(shell dirname $(shell pwd)):/go/src/github.com/elastic/beats/ harbor.enncloud.cn/enncloud/golang:1.8.3-alpine3.6 /bin/sh -c "cd /go/src/github.com/elastic/beats/filebeat && go build --ldflags -w -o filebeat"
 image: docker
-	docker build -t filebeat:$(TAG) -f Dockerfile.dev .
-image: pack
-	docker push filebeat:$(TAG)
+	docker build -t harbor.enncloud.cn/enncloud/filebeat:$(TAG) -f Dockerfile.dev .
+pack: image
+	docker push harbor.enncloud.cn/enncloud/filebeat:$(TAG)

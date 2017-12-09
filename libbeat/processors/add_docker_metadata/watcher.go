@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"sync"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -35,6 +36,8 @@ type watcher struct {
 	ctx                context.Context
 	stop               context.CancelFunc
 	containers         map[string]*Container
+	delcontainers      map[string] time.Time
+	sync.RWMutex
 	lastValidTimestamp int64
 }
 
@@ -82,6 +85,7 @@ func NewWatcher(host string, tls *TLSConfig) (Watcher, error) {
 		ctx:        ctx,
 		stop:       cancel,
 		containers: make(map[string]*Container),
+		delcontainers:make(map[string]time.Time),
 	}, nil
 }
 
@@ -128,8 +132,25 @@ func (w *watcher) Start() error {
 	}
 
 	go w.watch()
+	go w.delay()
 
 	return nil
+}
+
+func (w *watcher) delay() {
+	for{
+		time.Sleep(time.Second*3)
+		now := time.Now()
+		w.Lock()
+		for k,v := range w.delcontainers{
+			if now.Sub(v) > 20*time.Second{
+				delete(w.containers, k)
+				delete(w.delcontainers, k)
+			}
+		}
+		w.Unlock()
+	}
+
 }
 
 func (w *watcher) watch() {
@@ -173,14 +194,23 @@ func (w *watcher) watch() {
 							}
 						}
 					}
+					w.Lock()
+					delete(w.delcontainers, container.ID)
+					delete(w.delcontainers, container.Name)
 					w.containers[container.ID] = container
 					w.containers[container.Name] = container
+					w.Unlock()
 				}
 
 				// Delete
 				if event.Action == "die" || event.Action == "kill" {
-					delete(w.containers, event.Actor.ID)
-					delete(w.containers, event.Actor.Attributes["name"])
+					//delete(w.containers, event.Actor.ID)
+					//delete(w.containers, event.Actor.Attributes["name"])
+					now := time.Now()
+					w.Lock()
+					w.delcontainers[event.Actor.ID] = now
+					w.delcontainers[event.Actor.Attributes["name"]] = now
+					w.Unlock()
 				}
 
 			case err := <-errors:
